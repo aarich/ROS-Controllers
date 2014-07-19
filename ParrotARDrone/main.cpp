@@ -126,8 +126,10 @@ void MyDataCallback(const std_msgs::String msg)
     }
 }
 
-void move(int t)
+void move(float t)
 {
+    if (abs(t) > 1)
+        return;
     SetCommand(t, 0, 0, 0);
     cmdVelPub.publish(cmd_msg);
     Duration(1).sleep();
@@ -135,9 +137,16 @@ void move(int t)
     cmdVelPub.publish(cmd_msg);
 }
 
-void turn(int time)
+#define TIMETOTURNAROUND 1.0
+
+void turn(int deg)
 {
-    // TODO
+    SetCommand(0, 0, 1, 0);
+    float t = (float) deg * TIMETOTURNAROUND / 360.0;
+    Duration(t).sleep();
+    cout << t << endl;
+    SetCommand(0, 0, 0, 0);
+
 }
 
 int main(int argc, char **argv)
@@ -189,10 +198,10 @@ int main(int argc, char **argv)
         else if (c == 'k')
             move(-1);
         else if (c == 'j')
-            turn(1);
+            turn(360);
         else if (c == 'l')
             turn(-1);
-        spinOnce();
+        // spinOnce();
     }
     tl(1);
 
