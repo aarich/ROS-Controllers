@@ -11,6 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/nonfree.hpp>
 #include "opencv2/core/core.hpp"
+
 #include <boost/algorithm/string.hpp>
 
 #include <tf/tf.h>
@@ -141,7 +142,7 @@ void move(float t)
 
 void turn(int deg)
 {
-    SetCommand(0, 0, 1, 0);
+    SetCommand(0, 0, 0, 1);
     float t = (float) deg * TIMETOTURNAROUND / 360.0;
     Duration(t).sleep();
     cout << t << endl;
@@ -198,7 +199,7 @@ int main(int argc, char **argv)
         else if (c == 'k')
             move(-1);
         else if (c == 'j')
-            turn(360);
+            turn(360.0);
         else if (c == 'l')
             turn(-1);
         // spinOnce();
@@ -221,7 +222,7 @@ float round(float x)
     return (float) ((int) (x*100))/100.0;
 }
 
-void SetCommand(float x, float y, float yaw_velocity, float z)
+void SetCommand(float x, float y, float z, float yaw_velocity)
 {
     cmd_msg.linear.x  = x;
     cmd_msg.linear.y  = y;
