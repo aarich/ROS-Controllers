@@ -6,6 +6,8 @@
 *
 **/
 
+#include "Robot.h"
+
 using namespace std;
 
 #define PI 3.14159
@@ -39,7 +41,7 @@ vector<float> Robot::P2P()
 		turn = change;
 	float d = Distance();
 	if (d > 0.1)
-		translate = min(1, d);
+		translate = min((float) 1.0, (float) d);
 	vector<float> result;
 	result.push_back(turn * 180 / PI);
 	result.push_back(translate);
@@ -88,6 +90,15 @@ float Robot::Distance()
 	return sqrt(x*x + y*y);
 }
 
+vector<float> ToVector(float a, float b, float c)
+{
+	vector<float> v;
+	v.push_back(a);
+	v.push_back(b);
+	v.push_back(c);
+	return v;
+}
+
 vector<float> Robot::GetHeading() 			{ return this->heading; }
 void Robot::SetHeading(vector<float> v) 	{ this->heading = v; }
 vector<float> Robot::GetLocation() 			{ return this->location; }
@@ -96,3 +107,7 @@ vector<float> Robot::GetDestination() 		{ return this->destination; }
 void Robot::SetDestination(vector<float> v) { this->destination = v; }
 int Robot::GetState() 						{ return this->state; }
 void Robot::SetState(int i) 				{ this->state = i; }
+
+void Robot::SetHeading(float x, float y, float z) 		{ SetHeading(ToVector(x, y, z)); }
+void Robot::SetLocation(float x, float y, float z) 		{ SetLocation(ToVector(x, y, z)); }
+void Robot::SetDestination(float x, float y, float z) 	{ SetDestination(ToVector(x, y, z)); }

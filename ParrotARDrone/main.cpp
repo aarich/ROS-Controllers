@@ -22,7 +22,7 @@
 #include <ardrone_autonomy/Navdata.h>
 #include <ardrone_autonomy/navdata_magneto.h>
 
-
+#include "../Robot/Robot.h"
 
 #include "boost/filesystem.hpp"
 
@@ -41,7 +41,7 @@ image_transport::Publisher image_publisher;
 Subscriber mcl_data_subscriber;
 
 Subscriber imageSub;
-Subscriber navDataSub;
+// Subscriber navDataSub;
 
 Publisher landPub;
 Publisher takeOffPub;
@@ -50,20 +50,24 @@ Publisher cmdVelPub;
 std_msgs::Empty empty_msg;
 geometry_msgs::Twist cmd_msg;
 
+Robot robot;
 
 const std::string publish_image_data_under = "ROBOT_IMAGE_PUBLISHER";
 const std::string mcl_data_publisher_name = "MCL_DATA_PUBLISHER";
 
 const int handshake = 15;
 const int readymove = 25;
+const int guessdata = 35;
 const int starting_move = 10;
 const int finished_move = 20;
 
 bool handshake_recieved = false;
 
+// Some declarations
 float round(float x);
-void tl(int torl);
 void SetCommand(float roll, float pitch, float yaw_velocity, float z_velocity);
+void Command(float x, float yaw_velocity);
+void Move(vector<float> v);
 
 void imageCallback (const sensor_msgs::ImageConstPtr& img)
 {
@@ -83,12 +87,6 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
     image_publisher.publish(img);
 }
 
-void navCallback(ardrone_autonomy::Navdata msg)
-    {
-        ;
-    }
-
-
 void publish_Move()
 {
     stringstream ss;
@@ -97,17 +95,10 @@ void publish_Move()
     msg.data = "10";
     mcl_movement_publisher.publish(msg);
 
-    float translate;
-    int turn;
-    cout << "Translate: ";
-    cin >> translate;
-    cin.get();
-    cout << endl;
-    cout << "Turn: ";
-    cin >> turn;
-    cin.get();
-    cout << endl;
-    ss << "20" << " " << translate << " " << turn << " ";
+    vector<float> move = robot.NextMove();
+    Move(move);
+
+    ss << "20" << " " << move[1] << " " << move[0] << " ";
     msg.data = ss.str();
     mcl_movement_publisher.publish(msg);
 }
@@ -115,39 +106,76 @@ void publish_Move()
 void MyDataCallback(const std_msgs::String msg)
 {
     string str = msg.data;
+    std::vector<std::string> strs;
+    std::vector<float> vals;
+    boost::split(strs, str, boost::is_any_of("_"));
 
-    if(atoi(str.c_str())== handshake)
-    {
+    int command = atoi(strs[0].c_str());
+
+    if (command== handshake)
         handshake_recieved = true;
-    }
-    else if(atoi(str.c_str()) == readymove)
-    {
-        std::cout << "Movement Command Recieved, starting move" << std::endl;
+    else if (command == readymove)
         publish_Move();
+    else if (command == guessdata)
+    {
+        if(strs.size() != 7)
+        {
+            cout << "Invalid guess data format" << endl;
+            return;
+        }
+        vector<float> vars;
+
+        for(int i = 1; i < 7 && i < strs.size(); i++)
+        {
+            vars.push_back(atof(strs[i].c_str()));
+        }
+        robot.SetLocation(vars[0], vars[1], vars[2]);
+        robot.SetHeading(vars[3], vars[4], vars[5]);
     }
 }
 
-void move(float t)
+#define TRANLATESPEED 0.5 // meters per second
+
+void translate(float d)
 {
-    if (abs(t) > 1)
-        return;
-    SetCommand(t, 0, 0, 0);
-    cmdVelPub.publish(cmd_msg);
-    Duration(1).sleep();
-    SetCommand(0, 0, 0, 0);
-    cmdVelPub.publish(cmd_msg);
+    float t = d / TRANLATESPEED;
+    float r = 0.5;
+
+    if (d < 0)
+    {
+        t *= -1;
+        r *= -1;
+    }
+
+    Command(r, 0);
+    Duration(t).sleep();
+    Command(0, 0);
 }
 
-#define TIMETOTURNAROUND 1.0
+#define TIMETOTURNAROUND 4.0
 
 void turn(int deg)
 {
-    SetCommand(0, 0, 0, 1);
     float t = (float) deg * TIMETOTURNAROUND / 360.0;
-    Duration(t).sleep();
-    cout << t << endl;
-    SetCommand(0, 0, 0, 0);
+    int r = 1;
 
+    if (deg < 0)
+    {
+        t *= -1;
+        r *= -1;
+    }
+
+    Command(0, r);
+    Duration(t).sleep();
+    Command(0, 0);
+}
+
+void Move(vector<float> v)
+{
+    if (v[0] > 0.1)
+        turn((int) v[0]);
+    if (v[1] > 0.1)
+        translate(v[1]);
 }
 
 int main(int argc, char **argv)
@@ -158,68 +186,57 @@ int main(int argc, char **argv)
 
     image_transport::ImageTransport it(node);
 
-    // mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
+    mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
 
-    // time_t temptime = time(0);
-    // std::cout << "Waiting for Handshake from Program .." << std::endl;
-    // while(!handshake_recieved && (time(0) - temptime) < 20)
-    // {
-    //     Duration(0.05).sleep();
-    //     spinOnce();
-    // }
-    // if(handshake_recieved)
-    //     std::cout << "Handshake recieved" << std::endl;
-    // else
-    // {
-    //     std::cout << "No handshake recieved";
-    //     return -1;
-    // }
+    time_t temptime = time(0);
+    std::cout << "Waiting for Handshake from Program .." << std::endl;
+    while(!handshake_recieved && (time(0) - temptime) < 20)
+    {
+        Duration(0.05).sleep();
+        spinOnce();
+    }
+    if(handshake_recieved)
+        std::cout << "Handshake recieved" << std::endl;
+    else
+    {
+        std::cout << "No handshake recieved";
+        return -1;
+    }
     
     mcl_movement_publisher = node.advertise<std_msgs::String>("ROBOT_MOVEMENT_PUBLISHER", 4);
     image_publisher = it.advertise(publish_image_data_under, 4, true);
 
     // ARDrone stuff
     imageSub    = node.subscribe("/ardrone/image_raw", 10, imageCallback);
-    navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
+    // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
     landPub     = node.advertise<std_msgs::Empty>("/ardrone/land", 1);
     takeOffPub  = node.advertise<std_msgs::Empty>("/ardrone/takeoff", 1);
     cmdVelPub   = node.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
+    robot.SetDestination(0, 0, 0);
+
+    // Wait for connection
     Duration(4).sleep();
-    cout << "Liftoff" << endl;
 
-    tl(0);
-    char c = getchar();
-    char q = 'q';
-    while (c != q)
-    {
-        c = getchar();
-        if (c == 'i')
-            move(1);
-        else if (c == 'k')
-            move(-1);
-        else if (c == 'j')
-            turn(360.0);
-        else if (c == 'l')
-            turn(-1);
-        // spinOnce();
-    }
-    tl(1);
+    // Take Off!
+    takeOffPub.publish(empty_msg);
 
+    spin();
+
+    // Land!
+    landPub.publish(empty_msg);
     destroyAllWindows();
-}
-
-void tl(int torl) // takeoff or land?
-{
-    if (torl == 0)
-        takeOffPub.publish(empty_msg);
-    else
-        landPub.publish(empty_msg);
 }
 
 float round(float x)
 {
     return (float) ((int) (x*100))/100.0;
+}
+
+void Command(float x, float yaw_velocity)
+{
+    SetCommand(x, 0, 0, yaw_velocity);
+    cmdVelPub.publish(cmd_msg);
 }
 
 void SetCommand(float x, float y, float z, float yaw_velocity)

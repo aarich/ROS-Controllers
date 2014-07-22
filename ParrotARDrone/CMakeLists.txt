@@ -9,6 +9,6 @@ find_package(Boost REQUIRED)
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-add_executable(drone main.cpp)
+add_executable(drone main.cpp ../Robot/Robot.cpp)
 
 target_link_libraries (drone ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} /opt/ros/hydro/lib/libcv_bridge.so)
