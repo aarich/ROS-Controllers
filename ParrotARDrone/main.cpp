@@ -63,6 +63,8 @@ const int finished_move = 20;
 
 bool handshake_recieved = false;
 
+bool fly = false;
+
 // Some declarations
 float round(float x);
 void SetCommand(float roll, float pitch, float yaw_velocity, float z_velocity);
@@ -82,9 +84,26 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
         return;
     }
 
-    imshow("Robot Image", im2->image);
+    int h = im2->image.rows;
+    int w = im2->image.cols;
+    cv::Rect myROI((w-h)/2, 0, h, h);
+
+    cv::Mat croppedImage = im2->image(myROI);
+
+    imshow("Robot Image", croppedImage);
     waitKey(2);
-    image_publisher.publish(img);
+
+    cv_bridge::CvImage out_msg;
+    ros::Time imtime = ros::Time::now();
+    out_msg.header.stamp = imtime;
+    out_msg.header.frame_id = "robot_image";
+    out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+    out_msg.image = croppedImage;
+        
+    if(!out_msg.image.empty())
+        image_publisher.publish(out_msg.toImageMsg());
+    ros::spinOnce();
+    // image_publisher.publish(img);
 }
 
 void publish_Move()
@@ -147,7 +166,8 @@ void translate(float d)
         r *= -1;
     }
 
-    Command(r, 0);
+    if (fly)
+        Command(r, 0);
     Duration(t).sleep();
     Command(0, 0);
 }
@@ -165,17 +185,21 @@ void turn(int deg)
         r *= -1;
     }
 
-    Command(0, r);
+    if (fly)
+        Command(0, r);
     Duration(t).sleep();
     Command(0, 0);
 }
 
 void Move(vector<float> v)
 {
+    cout << "Turn: " << v[0] << ", Tranlsate: " << v[1] << endl;
     if (v[0] > 0.1)
         turn((int) v[0]);
     if (v[1] > 0.1)
         translate(v[1]);
+    if (abs(v[0]+v[1]) < 0.1)
+        landPub.publish(empty_msg);
 }
 
 int main(int argc, char **argv)
@@ -211,7 +235,7 @@ int main(int argc, char **argv)
     // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
     landPub     = node.advertise<std_msgs::Empty>("/ardrone/land", 1);
     takeOffPub  = node.advertise<std_msgs::Empty>("/ardrone/takeoff", 1);
-    cmdVelPub   = node.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    cmdVelPub   = node.advertise<geometry_msgs::Twist>("/camd_vel", 1);
 
     robot.SetDestination(0, 0, 0);
 
@@ -219,12 +243,14 @@ int main(int argc, char **argv)
     Duration(4).sleep();
 
     // Take Off!
-    takeOffPub.publish(empty_msg);
+    if (fly)
+        takeOffPub.publish(empty_msg);
 
     spin();
 
     // Land!
-    landPub.publish(empty_msg);
+    if (fly)
+        landPub.publish(empty_msg);
     destroyAllWindows();
 }
 
