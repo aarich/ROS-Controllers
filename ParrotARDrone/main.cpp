@@ -90,7 +90,7 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
 
     cv::Mat croppedImage = im2->image(myROI);
 
-    imshow("Robot Image", croppedImage);
+    imshow("Robot Image", im2->image);
     waitKey(2);
 
     cv_bridge::CvImage out_msg;
