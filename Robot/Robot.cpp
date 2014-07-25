@@ -12,7 +12,7 @@ using namespace std;
 
 #define PI 3.14159
 
-Robot::Robot() : state(0)
+Robot::Robot() : state(1)
     {
         vector<float> v;
         v.push_back(0.0);
@@ -40,7 +40,7 @@ vector<float> Robot::P2P()
 	if (change > 0.2)
 		turn = change;
 	float d = Distance();
-	if (d > 0.1)
+	if (d > 0.1 && turn < 0.2)
 		translate = min((float) 1.0, (float) d);
 	vector<float> result;
 	result.push_back(turn * 180 / PI);

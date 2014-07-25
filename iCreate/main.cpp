@@ -36,19 +36,13 @@ using namespace std;
 using namespace cv;
 using namespace ros;
 
+Publisher create_move; 
 Publisher mcl_movement_publisher; 
 image_transport::Publisher image_publisher; 
 Subscriber mcl_data_subscriber;
 
 Subscriber imageSub;
 // Subscriber navDataSub;
-
-Publisher landPub;
-Publisher takeOffPub;
-Publisher cmdVelPub;
-
-std_msgs::Empty empty_msg;
-geometry_msgs::Twist cmd_msg;
 
 Robot robot;
 
@@ -63,12 +57,9 @@ const int finished_move = 20;
 
 bool handshake_recieved = false;
 
-bool fly = false;
-
 // Some declarations
 float round(float x);
-void SetCommand(float roll, float pitch, float yaw_velocity, float z_velocity);
-void Command(float x, float yaw_velocity);
+void Command(float x, float turn);
 void Move(vector<float> v);
 
 void imageCallback (const sensor_msgs::ImageConstPtr& img)
@@ -153,53 +144,13 @@ void MyDataCallback(const std_msgs::String msg)
     }
 }
 
-#define TRANLATESPEED 0.5 // meters per second
-
-void translate(float d)
-{
-    float t = d / TRANLATESPEED;
-    float r = 0.5;
-
-    if (d < 0)
-    {
-        t *= -1;
-        r *= -1;
-    }
-
-    if (fly)
-        Command(r, 0);
-    Duration(t).sleep();
-    Command(0, 0);
-}
-
-#define TIMETOTURNAROUND 4.0
-
-void turn(int deg)
-{
-    float t = (float) deg * TIMETOTURNAROUND / 360.0;
-    int r = 1;
-
-    if (deg < 0)
-    {
-        t *= -1;
-        r *= -1;
-    }
-
-    if (fly)
-        Command(0, r);
-    Duration(t).sleep();
-    Command(0, 0);
-}
-
 void Move(vector<float> v)
 {
-    cout << "Turn: " << v[0] << ", Tranlsate: " << v[1] << endl;
-    if (v[0] > 0.1)
-        turn((int) v[0]);
-    if (v[1] > 0.1)
-        translate(v[1]);
-    if (abs(v[0]+v[1]) < 0.1)
-        landPub.publish(empty_msg);
+    cout << "Turn: " << v[0] << ", Translate: " << v[1] << endl;
+    if (v[0] + v[1] > 0.1)
+        Command(v[1], (int) v[0]);
+    else
+        Command(0, 0);
 }
 
 int main(int argc, char **argv)
@@ -209,48 +160,40 @@ int main(int argc, char **argv)
     namedWindow("Robot Image");
 
     image_transport::ImageTransport it(node);
+    robot.SetState(0);
 
-    // mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
+    mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
 
-    // time_t temptime = time(0);
-    // std::cout << "Waiting for Handshake from Program .." << std::endl;
-    // while(!handshake_recieved && (time(0) - temptime) < 20)
-    // {
-    //     Duration(0.05).sleep();
-    //     spinOnce();
-    // }
-    // if(handshake_recieved)
-    //     std::cout << "Handshake recieved" << std::endl;
-    // else
-    // {
-    //     std::cout << "No handshake recieved";
-    //     return -1;
-    // }
+    time_t temptime = time(0);
+    std::cout << "Waiting for Handshake from Program .." << std::endl;
+    while(!handshake_recieved && (time(0) - temptime) < 20)
+    {
+        Duration(0.05).sleep();
+        spinOnce();
+    }
+    if(handshake_recieved)
+        std::cout << "Handshake recieved" << std::endl;
+    else
+    {
+        std::cout << "No handshake recieved";
+        return -1;
+    }
     
+    create_move = node.advertise<std_msgs::String>("move_commands", 4);
     mcl_movement_publisher = node.advertise<std_msgs::String>("ROBOT_MOVEMENT_PUBLISHER", 4);
-    image_publisher = it.advertise(publish_image_data_under, 4, true);
+    image_publisher = it.advertise(publish_image_data_under, 1, true);
 
     // // ARDrone stuff
-    // imageSub    = node.subscribe("/ardrone/image_raw", 10, imageCallback);
-    // // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
-    landPub     = node.advertise<std_msgs::Empty>("/ardrone/land", 1);
-    takeOffPub  = node.advertise<std_msgs::Empty>("/ardrone/takeoff", 1);
-    cmdVelPub   = node.advertise<geometry_msgs::Twist>("/camd_vel", 1);
+    imageSub    = node.subscribe("/ardrone/image_raw", 1, imageCallback);
+    // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
 
     robot.SetDestination(0, 0, 0);
 
     // Wait for connection
     Duration(4).sleep();
 
-    // Take Off!
-    if (fly)
-        takeOffPub.publish(empty_msg);
-
     spin();
 
-    // Land!
-    if (fly)
-        landPub.publish(empty_msg);
     destroyAllWindows();
 }
 
@@ -259,16 +202,11 @@ float round(float x)
     return (float) ((int) (x*100))/100.0;
 }
 
-void Command(float x, float yaw_velocity)
+void Command(float forward, float turn)
 {
-    SetCommand(x, 0, 0, yaw_velocity);
-    cmdVelPub.publish(cmd_msg);
-}
-
-void SetCommand(float x, float y, float z, float yaw_velocity)
-{
-    cmd_msg.linear.x  = x;
-    cmd_msg.linear.y  = y;
-    cmd_msg.linear.z  = z;
-    cmd_msg.angular.z = yaw_velocity;
+    stringstream ss;
+    ss << forward << " " << turn;
+    std_msgs::String msg;
+    msg.data = ss.str();
+    create_move.publish(msg);
 }
