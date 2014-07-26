@@ -82,17 +82,17 @@ def callback(data):
 
     if forward > 0.1:
         D.tank(s, s)
-        time.sleep(forward * 1.2)
+        time.sleep(abs(forward * 1.2))
     elif forward < -0.1:
         D.tank(-s, -s)
-        time.sleep(forward * 1.2)
+        time.sleep(abs(forward * 1.2))
 
     if turn  > 0.1:
         D.tank(s, -s)
-        time.sleep(turn / degrees_per_second )
+        time.sleep(abs(turn / degrees_per_second ))
     elif turn < -0.1:
         D.tank(-s, s)
-        time.sleep( turn / degrees_per_second )
+        time.sleep( abs(turn / degrees_per_second ))
 
     D.tank(0,0)
 

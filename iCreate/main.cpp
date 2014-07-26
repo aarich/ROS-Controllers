@@ -147,7 +147,7 @@ void MyDataCallback(const std_msgs::String msg)
 void Move(vector<float> v)
 {
     cout << "Turn: " << v[0] << ", Translate: " << v[1] << endl;
-    if (v[0] + v[1] > 0.1)
+    if (abs(v[0]) + abs(v[1]) > 0.1)
         Command(v[1], (int) v[0]);
     else
         Command(0, 0);
