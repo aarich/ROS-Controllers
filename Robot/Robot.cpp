@@ -36,8 +36,10 @@ vector<float> Robot::P2P()
 {
 	float turn = 0;
 	float translate = 0;
-	float change = DesiredAngle() - CurrentAngle();
-	if (change > 0.2)
+	float change = CurrentAngle() - DesiredAngle();
+	if (change > PI / 2)
+		change = change - PI;
+	if (abs(change) > 0.1)
 		turn = change;
 	float d = Distance();
 	if (d > 0.1 && turn < 0.2)

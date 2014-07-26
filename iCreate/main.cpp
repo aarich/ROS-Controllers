@@ -160,7 +160,9 @@ int main(int argc, char **argv)
     namedWindow("Robot Image");
 
     image_transport::ImageTransport it(node);
+
     robot.SetState(0);
+    robot.SetDestination(0.5, 0.1, 1.5);
 
     mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
 

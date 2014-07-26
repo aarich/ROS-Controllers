@@ -71,26 +71,28 @@ def callback(data):
     """
     received = data.data.split()
 
-    forward = received[0]
-    turn = received[1]
-
+    forward = float(received[0])
+    turn =float( received[1])
+    print received
     # jaws()
 
     s = 100
 
+    degrees_per_second = 30
+
     if forward > 0.1:
         D.tank(s, s)
-        time.sleep(1)
+        time.sleep(forward * 1.2)
     elif forward < -0.1:
         D.tank(-s, -s)
-        time.sleep(1)
+        time.sleep(forward * 1.2)
 
     if turn  > 0.1:
         D.tank(s, -s)
-        time.sleep(1)
+        time.sleep(turn / degrees_per_second )
     elif turn < -0.1:
         D.tank(-s, s)
-        time.sleep(1)
+        time.sleep( turn / degrees_per_second )
 
     D.tank(0,0)
 
