@@ -108,6 +108,8 @@ void publish_Move()
     vector<float> move = robot.NextMove();
     Move(move);
 
+    Duration(2).sleep();
+
     ss << "20" << " " << move[1] << " " << move[0] << " ";
     msg.data = ss.str();
     mcl_movement_publisher.publish(msg);
@@ -182,7 +184,7 @@ int main(int argc, char **argv)
     }
     
     create_move = node.advertise<std_msgs::String>("move_commands", 4);
-    mcl_movement_publisher = node.advertise<std_msgs::String>("ROBOT_MOVEMENT_PUBLISHER", 4);
+    mcl_movement_publisher = node.advertise<std_msgs::String>("ROBOT_MOVEMENT_PUBLISHER", 1);
     image_publisher = it.advertise(publish_image_data_under, 1, true);
 
     // // ARDrone stuff
