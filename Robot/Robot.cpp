@@ -43,7 +43,7 @@ vector<float> Robot::P2P()
 		turn = change;
 	float d = Distance();
 	if (d > 0.1 && turn < 0.2)
-		translate = min((float) 2.0, (float) d);
+		translate = min((float) 1.0, (float) d);
 	vector<float> result;
 	result.push_back(turn * 180 / PI);
 	result.push_back(translate);
