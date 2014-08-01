@@ -37,6 +37,8 @@ def main():
 
     init()
 
+    print "Setup successful. Listening for movement commands."
+
     rospy.spin()
 
 def jaws():
@@ -73,7 +75,6 @@ def callback(data):
 
     forward = float(received[0])
     turn =float( received[1])
-    print received
     # jaws()
 
     s = 100
