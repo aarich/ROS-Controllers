@@ -36,9 +36,14 @@ using namespace std;
 using namespace cv;
 using namespace ros;
 
-Publisher create_move; 
-Publisher mcl_movement_publisher; 
-image_transport::Publisher image_publisher; 
+// Robot Movement Algorithm
+#define P2P 0
+#define USERINPUT 1
+#define TESTSTATE 2
+
+Publisher create_move;
+Publisher mcl_movement_publisher;
+image_transport::Publisher image_publisher;
 Subscriber mcl_data_subscriber;
 Subscriber move_subscriber;
 
@@ -183,7 +188,7 @@ int main(int argc, char **argv)
 
     image_transport::ImageTransport it(node);
 
-    robot.SetState(0);
+    robot.SetState(TESTSTATE);
     robot.SetDestination(0.5, 0.1, 1.5);
 
     mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);

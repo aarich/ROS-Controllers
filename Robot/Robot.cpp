@@ -12,6 +12,11 @@ using namespace std;
 
 #define PI 3.14159
 
+// Robot Movement Algorithm
+#define P2P 0
+#define USERINPUT 1
+#define TESTSTATE 2
+
 Robot::Robot() : state(1)
     {
         vector<float> v;
@@ -26,10 +31,12 @@ Robot::Robot() : state(1)
 
 vector<float> Robot::NextMove()
 {
-	if (this->state == 0) // Point To Point Nav
+	if (this->state == P2P) // Point To Point Nav
 		return P2P();
-	else if (this->state == 1) // User Input
-		return UserInput();
+	else if (this->state == USERINPUT) // User Input
+		return UserInput();	
+	else if (this->state == TESTSTATE) // User Input
+		return Test();
 }
 
 vector<float> Robot::P2P()
@@ -48,9 +55,15 @@ vector<float> Robot::P2P()
 	result.push_back(turn * 180 / PI);
 	result.push_back(translate);
 
-	result.clear();
-	result.push_back(90);
+	return result;
+}
+
+vector<float> Robot::Test()
+{
+	vector<float> result;
 	result.push_back(0);
+	result.push_back(0);
+	
 	return result;
 }
 
