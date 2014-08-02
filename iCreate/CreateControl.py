@@ -65,6 +65,7 @@ def init():
     stream_name = 'move_commands'
 
     rospy.Subscriber( stream_name, String, callback )
+    D.pub = rospy.Publisher( "move_done", std_msgs.msg.String )
 
     # jaws()
 
@@ -77,9 +78,11 @@ def callback(data):
     turn =float( received[1])
     # jaws()
 
+    # print "Turning", turn, "degrees, then going", forward, "meters forward."
+
     s = 100
 
-    degrees_per_second = 30
+    degrees_per_second = 40
 
     if turn  > 0.1:
         D.tank(s, -s)
@@ -96,6 +99,9 @@ def callback(data):
         time.sleep(abs(forward * 1.2))
 
     D.tank(0,0)
+
+    D.pub.publish(String("Done"))
+
 
 if __name__ == "__main__":
    main()

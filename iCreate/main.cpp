@@ -40,11 +40,13 @@ Publisher create_move;
 Publisher mcl_movement_publisher; 
 image_transport::Publisher image_publisher; 
 Subscriber mcl_data_subscriber;
+Subscriber move_subscriber;
 
 Subscriber imageSub;
 // Subscriber navDataSub;
 
 Robot robot;
+vector<float> move;
 
 const std::string publish_image_data_under = "ROBOT_IMAGE_PUBLISHER";
 const std::string mcl_data_publisher_name = "MCL_DATA_PUBLISHER";
@@ -61,6 +63,15 @@ bool handshake_recieved = false;
 float round(float x);
 void Command(float x, float turn);
 void Move(vector<float> v);
+
+void moveDone (const std_msgs::String str)
+{
+    std_msgs::String msg;
+    stringstream ss;
+    ss << "20" << " " << move[1] << " " << move[0] << " ";
+    msg.data = ss.str();
+    mcl_movement_publisher.publish(msg);
+}
 
 void imageCallback (const sensor_msgs::ImageConstPtr& img)
 {
@@ -81,8 +92,23 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
 
     cv::Mat croppedImage = im2->image(myROI);
 
+    char key = 'k';
     imshow("Robot Image", im2->image);
-    waitKey(2);
+    key = waitKey(2);
+    if (key == 'q')
+    {
+        std_msgs::String msg;
+        stringstream ss;
+        ss << "20" << " " << move[1] << " " << move[0] << " ";
+        msg.data = ss.str();
+        mcl_movement_publisher.publish(msg);
+        ss.str();
+        ss << 666 << "_";
+        msg.data = ss.str();
+        mcl_movement_publisher.publish(msg);
+        ros::shutdown();
+        return;
+    }
 
     cv_bridge::CvImage out_msg;
     ros::Time imtime = ros::Time::now();
@@ -105,14 +131,8 @@ void publish_Move()
     msg.data = "10";
     mcl_movement_publisher.publish(msg);
 
-    vector<float> move = robot.NextMove();
+    move = robot.NextMove();
     Move(move);
-
-    Duration(2).sleep();
-
-    ss << "20" << " " << move[1] << " " << move[0] << " ";
-    msg.data = ss.str();
-    mcl_movement_publisher.publish(msg);
 }
 
 void MyDataCallback(const std_msgs::String msg)
@@ -189,8 +209,9 @@ int main(int argc, char **argv)
 
     // // ARDrone stuff
     imageSub    = node.subscribe("/ardrone/image_raw", 1, imageCallback);
+    move_subscriber = node.subscribe("move_done", 1, moveDone);
     // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
-
+    cout << "Connected!" << endl;
     robot.SetDestination(0, 0, 0);
 
     // Wait for connection

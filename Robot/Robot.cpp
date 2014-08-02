@@ -47,6 +47,10 @@ vector<float> Robot::P2P()
 	vector<float> result;
 	result.push_back(turn * 180 / PI);
 	result.push_back(translate);
+
+	result.clear();
+	result.push_back(90);
+	result.push_back(0);
 	return result;
 }
 
