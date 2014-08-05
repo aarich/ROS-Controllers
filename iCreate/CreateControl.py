@@ -62,10 +62,8 @@ def init():
     rospy.wait_for_service('song') # wait until our voice is available
     D.song = rospy.ServiceProxy('song', Song) # D.song is our "speaker" 
 
-    stream_name = 'move_commands'
-
-    rospy.Subscriber( stream_name, String, callback )
-    D.pub = rospy.Publisher( "move_done", std_msgs.msg.String )
+    rospy.Subscriber( 'move_commands', String, callback )
+    D.pub = rospy.Publisher( "move_done", String )
 
     # jaws()
 
@@ -78,7 +76,7 @@ def callback(data):
     turn =float( received[1])
     # jaws()
 
-    # print "Turning", turn, "degrees, then going", forward, "meters forward."
+    print "Turning", turn, "degrees, then going", forward, "meters forward."
 
     s = 100
 
@@ -101,7 +99,6 @@ def callback(data):
     D.tank(0,0)
 
     D.pub.publish(String("Done"))
-
 
 if __name__ == "__main__":
    main()
