@@ -4,9 +4,7 @@
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/image_encodings.h"
 #include <opencv2/opencv.hpp>
-#include "sensor_msgs/Image.h"
 #include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/nonfree.hpp>
@@ -71,6 +69,7 @@ void Move(vector<float> v);
 
 void moveDone (const std_msgs::String str)
 {
+    cout << "Move Is Done" << endl;
     std_msgs::String msg;
     stringstream ss;
     ss << "20" << " " << move[1] << " " << move[0] << " ";
@@ -107,7 +106,7 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
         ss << "20" << " " << move[1] << " " << move[0] << " ";
         msg.data = ss.str();
         mcl_movement_publisher.publish(msg);
-        ss.str();
+        ss.str("");
         ss << 666 << "_";
         msg.data = ss.str();
         mcl_movement_publisher.publish(msg);
@@ -138,6 +137,10 @@ void publish_Move()
 
     move = robot.NextMove();
     Move(move);
+    // ss.str("");
+    // ss << "20" << " " << move[1] << " " << move[0] << " ";
+    // msg.data = ss.str();
+    // mcl_movement_publisher.publish(msg);
 }
 
 void MyDataCallback(const std_msgs::String msg)
@@ -178,6 +181,7 @@ void Move(vector<float> v)
         Command(v[1], (int) v[0]);
     else
         Command(0, 0);
+    Duration(2).sleep();
 }
 
 int main(int argc, char **argv)
@@ -188,7 +192,10 @@ int main(int argc, char **argv)
 
     image_transport::ImageTransport it(node);
 
-    robot.SetState(TESTSTATE);
+    if (argc == 2)
+        robot.SetState(atoi(argv[1]));
+    else
+        robot.SetState(TESTSTATE);
     robot.SetDestination(0.5, 0.1, 1.5);
 
     mcl_data_subscriber = node.subscribe(mcl_data_publisher_name, 4, MyDataCallback);
@@ -212,12 +219,11 @@ int main(int argc, char **argv)
     mcl_movement_publisher = node.advertise<std_msgs::String>("ROBOT_MOVEMENT_PUBLISHER", 1);
     image_publisher = it.advertise(publish_image_data_under, 1, true);
 
-    // // ARDrone stuff
+    // ARDrone stuff
     imageSub    = node.subscribe("/ardrone/image_raw", 1, imageCallback);
     move_subscriber = node.subscribe("move_done", 1, moveDone);
-    // navDataSub  = node.subscribe("/ardrone/navdata", 3, navCallback);
     cout << "Connected!" << endl;
-    robot.SetDestination(0, 0, 0);
+    // robot.SetDestination(0, 0, 0);
 
     // Wait for connection
     Duration(4).sleep();

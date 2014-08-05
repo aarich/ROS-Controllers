@@ -63,6 +63,9 @@ vector<float> Robot::P2P()
     result.push_back(turn * 180 / PI);
     result.push_back(translate);
 
+    if (d < 0.2)
+        cout << "DESTINATION REACHED";
+
     return result;
 }
 

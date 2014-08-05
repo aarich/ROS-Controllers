@@ -76,8 +76,7 @@ def callback(data):
     turn =float( received[1])
     # jaws()
 
-    print "Turning", turn, "degrees, then going", forward, "meters forward."
-
+    # Speed:
     s = 100
 
     degrees_per_second = 40
