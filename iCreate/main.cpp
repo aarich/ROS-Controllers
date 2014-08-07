@@ -181,7 +181,7 @@ void Move(vector<float> v)
         Command(v[1], (int) v[0]);
     else
         Command(0, 0);
-    Duration(2).sleep();
+    // Duration(2).sleep();
 }
 
 int main(int argc, char **argv)
