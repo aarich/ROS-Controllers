@@ -9,3 +9,5 @@ sudo chmod 777 /dev/rfcomm0
 rosrun irobot_mudd driver.py
 
 rosrun ardrone_autonomy ardrone_driver
+
+robot42
