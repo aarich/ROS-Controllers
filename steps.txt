@@ -1,0 +1,13 @@
+roscore
+
+sudo rm /dev/rfcomm0
+hcitool scan
+sudo rfcomm connect 0 00:0A:3A:2E:CC:A8 1
+
+rosparam set /irobot_mudd/port /dev/rfcomm0
+sudo chmod 777 /dev/rfcomm0
+rosrun irobot_mudd driver.py
+
+rosrun ardrone_autonomy ardrone_driver
+
+robot42
