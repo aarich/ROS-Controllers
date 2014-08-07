@@ -35,9 +35,10 @@ using namespace cv;
 using namespace ros;
 
 // Robot Movement Algorithm
-#define P2P 0
+#define P2PNAV 0
 #define USERINPUT 1
 #define TESTSTATE 2
+#define FORWARD 3
 
 Publisher create_move;
 Publisher mcl_movement_publisher;

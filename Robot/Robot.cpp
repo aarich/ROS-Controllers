@@ -16,6 +16,7 @@ using namespace std;
 #define P2PNAV 0
 #define USERINPUT 1
 #define TESTSTATE 2
+#define FORWARD 3
 
 Robot::Robot() : state(1)
     {
@@ -37,6 +38,15 @@ vector<float> Robot::Test()
     return result;
 }
 
+vector<float> Robot::Forward()
+{
+    vector<float> result;
+    result.push_back(0);
+    result.push_back(1);
+    
+    return result;
+}
+
 vector<float> Robot::NextMove()
 {
     if (this->state == P2PNAV) // Point To Point Nav
@@ -45,6 +55,8 @@ vector<float> Robot::NextMove()
         return UserInput(); 
     else if (this->state == TESTSTATE) // User Input
         return Test();
+    else if (this->state == FORWARD) // User Input
+        return Forward(); 
 }
 
 vector<float> Robot::P2P()

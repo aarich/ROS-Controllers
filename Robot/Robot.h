@@ -29,6 +29,7 @@ private:
 	vector<float> P2P();
 	vector<float> UserInput();
 	vector<float> Test();
+	vector<float> Forward();
 
 public:
 
