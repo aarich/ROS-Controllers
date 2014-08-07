@@ -114,6 +114,14 @@ void imageCallback (const sensor_msgs::ImageConstPtr& img)
         ros::shutdown();
         return;
     }
+    else if (key == '0')
+        robot.SetState(0);
+    else if (key == '1')
+        robot.SetState(1);
+    else if (key == '2')
+        robot.SetState(2);
+    else if (key == '3')
+        robot.SetState(3);
 
     cv_bridge::CvImage out_msg;
     ros::Time imtime = ros::Time::now();
